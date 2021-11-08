@@ -52,7 +52,7 @@ public class App implements RequestHandler<APIGatewayProxyRequestEvent, APIGatew
                 throw new RuntimeException("Length too large: " + q.length());
             }
 
-            List<String> suggestions = cache.get(q);
+            List<String> suggestions = cache.get(q.trim().toLowerCase());
             Map<String, List<String>> results = new HashMap<>();
             results.put("results", suggestions);
             String output = gson.toJson(results);
