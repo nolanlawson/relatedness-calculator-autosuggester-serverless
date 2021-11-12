@@ -3,7 +3,6 @@ package autosuggester;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
@@ -34,14 +33,14 @@ public class App implements RequestHandler<APIGatewayProxyRequestEvent, APIGatew
     private static final Map<String, List<String>> cache = new MapMaker()
             .maximumSize(1000)
             .makeComputingMap(
-                    new Function<>() {
+                    new Function<String, List<String>>() {
                         public List<String> apply(String q) {
                             return relationSuggester.suggest(q, MAX_NUM_SUGGESTIONS);
                         }
                     });
 
     public APIGatewayProxyResponseEvent handleRequest(final APIGatewayProxyRequestEvent input, final Context context) {
-        Map<String, String> headers = new HashMap<>();
+        Map<String, String> headers = new HashMap<String, String>();
         headers.put("Content-Type", "application/json;charset=utf-8");
 
         APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent()
@@ -53,7 +52,7 @@ public class App implements RequestHandler<APIGatewayProxyRequestEvent, APIGatew
             }
 
             List<String> suggestions = cache.get(q.trim().toLowerCase());
-            Map<String, List<String>> results = new HashMap<>();
+            Map<String, List<String>> results = new HashMap<String, List<String>>();
             results.put("results", suggestions);
             String output = gson.toJson(results);
             headers.put("Cache-Control", "public, max-age=604800, s-max-age=604800");
