@@ -14,9 +14,6 @@ import com.nolanlawson.relatedness.autosuggest.RelationSuggester;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import com.google.common.base.Function;
-import com.google.common.collect.MapMaker;
-
 /**
  * Handler for requests to Lambda function.
  */
@@ -26,18 +23,6 @@ public class App implements RequestHandler<APIGatewayProxyRequestEvent, APIGatew
     private static final int MAX_NUM_SUGGESTIONS = 10;
     private static final RelationSuggester relationSuggester = new RelationSuggester();
     private static final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-
-    /**
-     * Use a small LRU cache to hold the autosuggest data
-     */
-    private static final Map<String, List<String>> cache = new MapMaker()
-            .maximumSize(1000)
-            .makeComputingMap(
-                    new Function<String, List<String>>() {
-                        public List<String> apply(String q) {
-                            return relationSuggester.suggest(q, MAX_NUM_SUGGESTIONS);
-                        }
-                    });
 
     public APIGatewayProxyResponseEvent handleRequest(final APIGatewayProxyRequestEvent input, final Context context) {
         Map<String, String> headers = new HashMap<String, String>();
@@ -51,7 +36,7 @@ public class App implements RequestHandler<APIGatewayProxyRequestEvent, APIGatew
                 throw new RuntimeException("Length too large: " + q.length());
             }
 
-            List<String> suggestions = cache.get(q.trim().toLowerCase());
+            List<String> suggestions = relationSuggester.suggest(q, MAX_NUM_SUGGESTIONS);
             Map<String, List<String>> results = new HashMap<String, List<String>>();
             results.put("results", suggestions);
             String output = gson.toJson(results);
